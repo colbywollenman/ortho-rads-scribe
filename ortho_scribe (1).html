@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ortho Scribe</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0d0f0e;
+    --surface: #141716;
+    --surface2: #1c1f1d;
+    --border: #2a2e2c;
+    --border2: #363b38;
+    --green: #4ade80;
+    --green-dim: #166534;
+    --green-bg: #052e16;
+    --amber: #fbbf24;
+    --amber-bg: #1c1000;
+    --red: #f87171;
+    --red-bg: #1c0505;
+    --blue: #60a5fa;
+    --blue-bg: #0a1628;
+    --text: #e8ebe9;
+    --text2: #8a9490;
+    --text3: #556060;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+    --radius: 6px;
+    --radius-lg: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  .app-shell {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+
+  /* ── Header ── */
+  .app-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1rem;
+  }
+
+  .app-logo {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--green);
+    letter-spacing: -0.02em;
+  }
+
+  .app-logo span { color: var(--text3); }
+
+  .pill {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    border: 1px solid var(--border2);
+    color: var(--text3);
+    background: var(--surface);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .pill.green { border-color: var(--green-dim); color: var(--green); background: var(--green-bg); }
+  .pill.red { border-color: #7f1d1d; color: var(--red); background: var(--red-bg); animation: blink 1s ease infinite; }
+  .pill.amber { border-color: #78350f; color: var(--amber); background: var(--amber-bg); }
+
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* ── Panels ── */
+  .panels {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  @media (max-width: 700px) { .panels { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+  }
+
+  .card-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text3);
+    margin-bottom: 1rem;
+  }
+
+  /* ── Form elements ── */
+  label {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  input[type="text"], textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    padding: 7px 10px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  input[type="text"]:focus, textarea:focus { border-color: var(--border2); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 13px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .btn:hover { border-color: var(--text3); background: var(--border); }
+  .btn:disabled { opacity: .35; cursor: not-allowed; }
+  .btn.primary { background: var(--green-bg); border-color: var(--green-dim); color: var(--green); }
+  .btn.primary:hover { background: #063d1a; }
+  .btn.danger { background: var(--red-bg); border-color: #7f1d1d; color: var(--red); }
+  .btn.danger:hover { background: #2a0a0a; }
+
+  .field { margin-bottom: .875rem; }
+
+  .inline-row { display: flex; gap: 6px; align-items: center; }
+  .inline-row input { flex: 1; }
+
+  /* ── Tags ── */
+  .tag-list { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; min-height: 10px; }
+  .tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 99px;
+    padding: 2px 10px 2px 10px; font-size: 12px; color: var(--text2);
+  }
+  .tag button { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 14px; line-height: 1; padding: 0; }
+  .tag button:hover { color: var(--red); }
+
+  /* ── Divider ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+
+  /* ── Status bar ── */
+  .status-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 1rem; flex-wrap: wrap;
+  }
+  .current-patient {
+    font-family: var(--mono); font-size: 12px;
+    color: var(--green); margin-left: auto;
+  }
+
+  /* ── Transcript ── */
+  .transcript {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: .875rem 1rem;
+    min-height: 56px;
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.7;
+    margin-bottom: 1rem;
+    font-family: var(--sans);
+  }
+  .transcript .interim { color: var(--text3); font-style: italic; }
+  .transcript .final { color: var(--text); }
+
+  .tts-bar {
+    font-family: var(--mono); font-size: 11px; color: var(--blue);
+    background: var(--blue-bg); border: 1px solid #1e3a5f;
+    border-radius: var(--radius); padding: 5px 10px;
+    margin-bottom: .75rem; display: none;
+  }
+
+  /* ── Table ── */
+  .table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-lg); }
+
+  table {
+    width: 100%; border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  th {
+    background: var(--surface2);
+    color: var(--text3);
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 7px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text2);
+    vertical-align: middle;
+    transition: background .2s;
+  }
+  tr:last-child td { border-bottom: none; }
+
+  tr.active-row td { background: #0a1a0f; }
+  td.active-cell { background: #052e16 !important; color: var(--green) !important; font-family: var(--mono); font-weight: 500; }
+  td.flagged-cell { background: var(--amber-bg) !important; color: var(--amber) !important; font-family: var(--mono); }
+  td.patient-col { font-family: var(--mono); color: var(--text); font-size: 11px; }
+
+  /* ── Auth section ── */
+  .auth-notice {
+    background: var(--blue-bg);
+    border: 1px solid #1e3a5f;
+    border-radius: var(--radius);
+    padding: .875rem 1rem;
+    font-size: 12px;
+    color: var(--blue);
+    margin-bottom: 1rem;
+    line-height: 1.7;
+  }
+
+  .auth-notice a { color: var(--blue); }
+
+  .log-entry {
+    font-family: var(--mono); font-size: 11px; color: var(--text3);
+    padding: 2px 0; border-bottom: 1px solid var(--border);
+    line-height: 1.6;
+  }
+  .log-entry.ok { color: var(--green); }
+  .log-entry.err { color: var(--red); }
+  .log-entry.info { color: var(--amber); }
+
+  #log-box {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: .5rem .875rem;
+    max-height: 120px; overflow-y: auto;
+    margin-bottom: 1rem;
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+
+  .empty-hint { color: var(--text3); font-size: 12px; font-style: italic; padding: 1.5rem; text-align: center; font-family: var(--mono); }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- Header -->
+  <div class="app-header">
+    <div class="app-logo">ortho<span>//</span>scribe</div>
+    <span class="pill" id="mic-pill">mic off</span>
+    <span class="pill" id="claude-pill">claude idle</span>
+    <span class="pill" id="sheets-pill">sheets disconnected</span>
+  </div>
+
+  <!-- Setup Panel -->
+  <div id="setup-view">
+    <div class="panels">
+      <!-- Left: config -->
+      <div>
+        <div class="card" style="margin-bottom:1rem;">
+          <div class="card-title">Google Sheets</div>
+
+          <div class="auth-notice">
+            Paste your OAuth Client ID below.<br>
+            Don't have one? <a href="#" onclick="showSetupGuide()">See the 5-minute setup guide ↓</a>
+          </div>
+
+          <div class="field">
+            <label>OAuth Client ID</label>
+            <input type="text" id="client-id-input" placeholder="xxxx.apps.googleusercontent.com" />
+          </div>
+
+          <div class="field">
+            <label>Spreadsheet ID</label>
+            <input type="text" id="sheet-id-input" placeholder="from the URL: /spreadsheets/d/THIS_PART/edit" />
+          </div>
+
+          <div class="field">
+            <label>Sheet tab name</label>
+            <input type="text" id="tab-name-input" placeholder="Sheet1" value="Sheet1" />
+          </div>
+
+          <div class="field">
+            <label>Anthropic API Key</label>
+            <input type="text" id="api-key-input" placeholder="sk-ant-..." />
+          </div>
+
+          <button class="btn primary" onclick="connectSheets()" style="width:100%; justify-content:center; margin-top:.5rem;">
+            Connect to Google Sheets
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Or: manual column setup</div>
+          <div class="field">
+            <label>Measurement columns</label>
+            <div class="inline-row">
+              <input type="text" id="col-input" placeholder="e.g. Lateral tibial slope" />
+              <button class="btn" onclick="addCol()">Add</button>
+            </div>
+            <div class="tag-list" id="col-tags"></div>
+          </div>
+          <div class="field">
+            <label>Patients</label>
+            <div class="inline-row">
+              <input type="text" id="patient-input" placeholder="Patient 1, Patient 2…" />
+              <button class="btn" onclick="addPatients()">Add</button>
+            </div>
+            <div class="tag-list" id="patient-tags"></div>
+          </div>
+          <button class="btn primary" onclick="startManual()" style="width:100%; justify-content:center; margin-top:.5rem;">
+            Start without Sheets
+          </button>
+        </div>
+      </div>
+
+      <!-- Right: setup guide -->
+      <div class="card" id="setup-guide">
+        <div class="card-title">Google Cloud Setup Guide</div>
+        <div style="font-size:13px; color:var(--text2); line-height:1.9;">
+          <p style="margin-bottom:.75rem;">Follow these steps once — takes about 5 minutes.</p>
+
+          <p><span style="color:var(--green); font-family:var(--mono);">01 —</span> Go to <a href="https://console.cloud.google.com" target="_blank" style="color:var(--blue);">console.cloud.google.com</a></p>
+          <p style="margin-bottom:.5rem; color:var(--text3); font-size:12px; padding-left:1.5rem;">Create a new project (any name, e.g. "OrthoScribe")</p>
+
+          <p><span style="color:var(--green); font-family:var(--mono);">02 —</span> Enable the Google Sheets API</p>
+          <p style="margin-bottom:.5rem; color:var(--text3); font-size:12px; padding-left:1.5rem;">APIs & Services → Enable APIs → search "Google Sheets API" → Enable</p>
+
+          <p><span style="color:var(--green); font-family:var(--mono);">03 —</span> Create an OAuth 2.0 Client ID</p>
+          <p style="margin-bottom:.5rem; color:var(--text3); font-size:12px; padding-left:1.5rem;">APIs & Services → Credentials → Create Credentials → OAuth Client ID<br>
+          Application type: <strong style="color:var(--text);">Web application</strong><br>
+          Authorised JavaScript origins: <code style="font-family:var(--mono); background:var(--surface2); padding:1px 5px; border-radius:3px;">file://</code> and your local file path</p>
+
+          <p><span style="color:var(--green); font-family:var(--mono);">04 —</span> Copy your Client ID</p>
+          <p style="margin-bottom:.5rem; color:var(--text3); font-size:12px; padding-left:1.5rem;">It looks like: <code style="font-family:var(--mono); font-size:11px; background:var(--surface2); padding:1px 5px; border-radius:3px;">123456789-abc.apps.googleusercontent.com</code></p>
+
+          <p><span style="color:var(--green); font-family:var(--mono);">05 —</span> Get your Spreadsheet ID</p>
+          <p style="margin-bottom:.5rem; color:var(--text3); font-size:12px; padding-left:1.5rem;">Open your Google Sheet. Copy the long string from the URL:<br>
+          <code style="font-family:var(--mono); font-size:11px; background:var(--surface2); padding:1px 5px; border-radius:3px;">docs.google.com/spreadsheets/d/<strong style="color:var(--amber);">THIS_IS_THE_ID</strong>/edit</code></p>
+
+          <p><span style="color:var(--green); font-family:var(--mono);">06 —</span> Paste both into the form and click Connect.</p>
+
+          <hr class="divider" />
+          <p style="color:var(--text3); font-size:11px;">Your credentials stay in this browser tab only. Nothing is sent to any server except the Anthropic API (for parsing) and Google Sheets API (for writing).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Session View -->
+  <div id="session-view" style="display:none;">
+    <div class="status-row">
+      <button class="btn primary" id="mic-btn" onclick="toggleMic()">▶ Start listening</button>
+      <button class="btn" onclick="exportCSV()">↓ Export CSV</button>
+      <button class="btn" onclick="resetAll()">↺ Reset</button>
+      <div class="current-patient" id="current-label"></div>
+    </div>
+
+    <div class="transcript" id="transcript-box">
+      <span style="color:var(--text3); font-style:italic;">Transcript will appear here as you speak…</span>
+    </div>
+
+    <div class="tts-bar" id="tts-bar"></div>
+
+    <div id="log-box">
+      <div class="log-entry info">// session log</div>
+    </div>
+
+    <div class="table-scroll">
+      <table id="data-table">
+        <thead id="table-head"></thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+
+    <div style="font-size:11px; color:var(--text3); margin-top:.75rem; font-family:var(--mono);">
+      say "next patient" · "patient 3" · "[measurement] [value] [unit]"
+    </div>
+  </div>
+
+</div>
+
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client"></script>
+
+<script>
+// ── State ──────────────────────────────────────────────────────
+let columns = [], patients = [], tableData = {};
+let currentIdx = 0;
+let recognition = null, isListening = false;
+let procBuffer = '', procTimer = null;
+let accessToken = null;
+let spreadsheetId = '', tabName = 'Sheet1';
+let apiKey = '';
+let sheetRowOffset = 2; // row where patient data starts (row 1 = headers)
+let sheetPatientMap = {}; // patient name -> sheet row number
+
+// ── Utility ────────────────────────────────────────────────────
+function log(msg, type='') {
+  const box = document.getElementById('log-box');
+  const d = document.createElement('div');
+  d.className = 'log-entry ' + type;
+  const ts = new Date().toLocaleTimeString('en-US',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  d.textContent = `[${ts}] ${msg}`;
+  box.appendChild(d);
+  box.scrollTop = box.scrollHeight;
+}
+
+function setPill(id, text, cls) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'pill ' + (cls||'');
+}
+
+function speak(text) {
+  const bar = document.getElementById('tts-bar');
+  bar.textContent = '▷ ' + text;
+  bar.style.display = 'block';
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 1.05;
+    window.speechSynthesis.speak(u);
+    u.onend = () => setTimeout(()=>bar.style.display='none', 1500);
+  } else { setTimeout(()=>bar.style.display='none', 4000); }
+}
+
+// ── Setup guide toggle ──────────────────────────────────────────
+function showSetupGuide() {
+  document.getElementById('setup-guide').scrollIntoView({behavior:'smooth'});
+}
+
+// ── Column / Patient setup ──────────────────────────────────────
+function addCol() {
+  const inp = document.getElementById('col-input');
+  inp.value.split(',').map(s=>s.trim()).filter(Boolean).forEach(c=>{ if(!columns.includes(c)) columns.push(c); });
+  inp.value = '';
+  renderColTags();
+}
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.getElementById('col-input')?.addEventListener('keydown', e=>{ if(e.key==='Enter') addCol(); });
+  document.getElementById('patient-input')?.addEventListener('keydown', e=>{ if(e.key==='Enter') addPatients(); });
+});
+
+function renderColTags() {
+  document.getElementById('col-tags').innerHTML = columns.map((c,i)=>
+    `<span class="tag">${c}<button onclick="removeCol(${i})">×</button></span>`).join('');
+}
+function removeCol(i) { columns.splice(i,1); renderColTags(); }
+
+function addPatients() {
+  const inp = document.getElementById('patient-input');
+  inp.value.split(/[\n,]+/).map(s=>s.trim()).filter(Boolean).forEach(p=>{
+    if(!patients.includes(p)) { patients.push(p); tableData[p]={}; }
+  });
+  inp.value = '';
+  renderPatientTags();
+}
+function renderPatientTags() {
+  document.getElementById('patient-tags').innerHTML = patients.map((p,i)=>
+    `<span class="tag">${p}<button onclick="removePatient(${i})">×</button></span>`).join('');
+}
+function removePatient(i) { patients.splice(i,1); renderPatientTags(); }
+
+function startManual() {
+  if (!columns.length) { alert('Add at least one column.'); return; }
+  if (!patients.length) { patients=['Patient 1']; tableData['Patient 1']={}; }
+  apiKey = document.getElementById('api-key-input').value.trim();
+  if (!apiKey) { alert('Enter your Anthropic API key.'); return; }
+  document.getElementById('setup-view').style.display='none';
+  document.getElementById('session-view').style.display='block';
+  renderTable();
+  setCurrentPatient(0);
+  log('session started (manual mode)', 'ok');
+}
+
+// ── Google Sheets connection ────────────────────────────────────
+function connectSheets() {
+  const clientId = document.getElementById('client-id-input').value.trim();
+  spreadsheetId = document.getElementById('sheet-id-input').value.trim();
+  tabName = document.getElementById('tab-name-input').value.trim() || 'Sheet1';
+  apiKey = document.getElementById('api-key-input').value.trim();
+
+  if (!clientId || !spreadsheetId) { alert('Enter OAuth Client ID and Spreadsheet ID.'); return; }
+  if (!apiKey) { alert('Enter your Anthropic API key.'); return; }
+
+  if (typeof google === 'undefined' || !google.accounts) {
+    alert('Google sign-in library not loaded yet. Please wait a moment and try again, or hard-refresh the page (Ctrl+Shift+R on Windows / Cmd+Shift+R on Mac).');
+    return;
+  }
+
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: clientId,
+    scope: 'https://www.googleapis.com/auth/spreadsheets',
+    callback: async (resp) => {
+      if (resp.error) { setPill('sheets-pill','auth failed','red'); log('OAuth error: '+resp.error,'err'); return; }
+      accessToken = resp.access_token;
+      setPill('sheets-pill','sheets connected','green');
+      log('Google Sheets authenticated', 'ok');
+      await loadSheetStructure();
+    }
+  });
+  client.requestAccessToken();
+}
+
+async function loadSheetStructure() {
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(tabName)}!A1:Z200`;
+    const resp = await fetch(url, { headers: { Authorization: 'Bearer ' + accessToken } });
+    const data = await resp.json();
+    if (!data.values || data.values.length === 0) {
+      log('Sheet appears empty — set up columns and patients manually below', 'info');
+      document.getElementById('setup-view').style.display='none';
+      document.getElementById('session-view').style.display='block';
+      renderTable(); setCurrentPatient(0);
+      return;
+    }
+
+    // Row 1 = headers
+    const headers = data.values[0];
+    columns = headers.slice(1).filter(Boolean); // first col = patient name
+
+    patients = [];
+    tableData = {};
+    sheetPatientMap = {};
+
+    for (let r = 1; r < data.values.length; r++) {
+      const row = data.values[r];
+      const pName = row[0];
+      if (!pName) continue;
+      patients.push(pName);
+      tableData[pName] = {};
+      sheetPatientMap[pName] = r + 1; // 1-indexed sheet row
+      columns.forEach((col, ci) => {
+        if (row[ci+1]) tableData[pName][col] = row[ci+1];
+      });
+    }
+
+    log(`loaded ${patients.length} patients, ${columns.length} columns from sheet`, 'ok');
+    document.getElementById('setup-view').style.display='none';
+    document.getElementById('session-view').style.display='block';
+    renderTable();
+    setCurrentPatient(0);
+  } catch(e) {
+    log('Failed to read sheet: ' + e.message, 'err');
+  }
+}
+
+async function writeToSheet(patientName, colName, value) {
+  if (!accessToken || !spreadsheetId) return; // manual mode — table only
+  const rowNum = sheetPatientMap[patientName];
+  const colNum = columns.indexOf(colName) + 2; // +1 for 0-index, +1 for patient col
+  if (!rowNum || colNum < 2) return;
+  const cellAddr = `${tabName}!${colLetter(colNum)}${rowNum}`;
+  try {
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(cellAddr)}?valueInputOption=USER_ENTERED`, {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer '+accessToken, 'Content-Type':'application/json' },
+      body: JSON.stringify({ range: cellAddr, majorDimension:'ROWS', values:[[value]] })
+    });
+    log(`→ Sheets: ${patientName} / ${colName} = ${value}`, 'ok');
+  } catch(e) {
+    log('Sheets write error: '+e.message, 'err');
+  }
+}
+
+function colLetter(n) {
+  let s = '';
+  while (n > 0) { s = String.fromCharCode(64 + (n % 26 || 26)) + s; n = Math.floor((n-1)/26); }
+  return s;
+}
+
+// ── Table rendering ─────────────────────────────────────────────
+function colIdx(c) { return columns.indexOf(c); }
+
+function renderTable() {
+  document.getElementById('table-head').innerHTML =
+    '<tr><th>Patient</th>' + columns.map(c=>`<th>${c}</th>`).join('') + '</tr>';
+  document.getElementById('table-body').innerHTML = patients.map((p,i)=>
+    `<tr id="row-${i}"><td class="patient-col">${p}</td>` +
+    columns.map(c=>`<td id="cell-${i}-${colIdx(c)}">${tableData[p][c]||''}</td>`).join('')+
+    '</tr>'
+  ).join('') || `<tr><td colspan="${columns.length+1}" class="empty-hint">no patients loaded</td></tr>`;
+}
+
+function setCurrentPatient(idx) {
+  document.querySelectorAll('tr.active-row').forEach(r=>r.classList.remove('active-row'));
+  currentIdx = Math.max(0, Math.min(idx, patients.length-1));
+  const row = document.getElementById(`row-${currentIdx}`);
+  if (row) { row.classList.add('active-row'); row.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+  document.getElementById('current-label').textContent = patients[currentIdx] ? `▸ ${patients[currentIdx]}` : '';
+}
+
+function highlightCell(pi, colName, flagged) {
+  document.querySelectorAll('td.active-cell,td.flagged-cell').forEach(c=>c.classList.remove('active-cell','flagged-cell'));
+  const ci = colIdx(colName);
+  if (ci<0) return;
+  const cell = document.getElementById(`cell-${pi}-${ci}`);
+  if (cell) cell.classList.add(flagged?'flagged-cell':'active-cell');
+}
+
+function fillCell(patientName, colName, value) {
+  const pi = patients.indexOf(patientName);
+  if (pi<0 || colIdx(colName)<0) return;
+  tableData[patientName][colName] = value;
+  const cell = document.getElementById(`cell-${pi}-${colIdx(colName)}`);
+  if (cell) cell.textContent = value;
+  highlightCell(pi, colName, false);
+  writeToSheet(patientName, colName, value);
+}
+
+// ── Microphone / Speech Recognition ────────────────────────────
+function toggleMic() {
+  if (isListening) stopMic(); else startMic();
+}
+
+function startMic() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert('Speech recognition requires Chrome or Edge.'); return; }
+  recognition = new SR();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+
+  recognition.onstart = () => {
+    isListening = true;
+    document.getElementById('mic-btn').textContent = '■ Stop listening';
+    document.getElementById('mic-btn').className = 'btn danger';
+    setPill('mic-pill','listening','red');
+    log('mic started', 'ok');
+  };
+
+  recognition.onresult = (e) => {
+    let interim='', final='';
+    for (let i=e.resultIndex; i<e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript+' ';
+      else interim += e.results[i][0].transcript;
+    }
+    const box = document.getElementById('transcript-box');
+    box.innerHTML = (procBuffer+final ? `<span class="final">${procBuffer+final}</span>` : '') +
+                    (interim ? `<span class="interim">${interim}</span>` : '');
+    if (final.trim()) {
+      procBuffer += final;
+      clearTimeout(procTimer);
+      procTimer = setTimeout(()=>{
+        const t = procBuffer.trim(); procBuffer='';
+        if (t) processUtterance(t);
+      }, 850);
+    }
+  };
+
+  recognition.onerror = e => { if(e.error!=='no-speech') log('mic error: '+e.error,'err'); };
+  recognition.onend = () => { if (isListening) recognition.start(); };
+  recognition.start();
+}
+
+function stopMic() {
+  isListening = false;
+  if (recognition) recognition.stop();
+  document.getElementById('mic-btn').textContent = '▶ Start listening';
+  document.getElementById('mic-btn').className = 'btn primary';
+  setPill('mic-pill','mic off','');
+  log('mic stopped');
+}
+
+// ── Claude parsing ──────────────────────────────────────────────
+async function processUtterance(text) {
+  setPill('claude-pill','thinking','amber');
+  log(`heard: "${text}"`);
+
+  const prompt = `You are a medical scribe assistant for an orthopedic imaging session.
+
+Spreadsheet columns: ${JSON.stringify(columns)}
+Patients: ${JSON.stringify(patients)}
+Current patient: "${patients[currentIdx]}" (index ${currentIdx})
+Existing data: ${JSON.stringify(tableData)}
+
+Dictation: "${text}"
+
+Rules:
+1. Patient navigation: "next patient", "previous patient", "patient N", or a patient name → navigateTo action.
+2. Measurement: map spoken measurement to the closest column name and extract the value with its unit → fillCell.
+3. If genuinely ambiguous which column → uncertain:true with a short clarifying question.
+4. Assume current patient unless another is named.
+
+Respond ONLY with JSON, no markdown fences:
+{"actions":[
+  {"type":"navigateTo","patient":"next|previous|<name>|<0-based index>"},
+  {"type":"fillCell","patient":"<name>","column":"<exact column>","value":"<value with unit>","uncertain":false},
+  {"type":"fillCell","patient":"<name>","column":"<exact column>","value":"","uncertain":true,"question":"<short question>"}
+]}
+If nothing relevant: {"actions":[]}`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'x-api-key': apiKey, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:800, messages:[{role:'user',content:prompt}] })
+    });
+    const data = await resp.json();
+    const raw = data.content?.find(b=>b.type==='text')?.text || '{"actions":[]}';
+    const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    handleActions(parsed.actions||[]);
+  } catch(e) {
+    log('parse error: '+e.message, 'err');
+  }
+  setPill('claude-pill','claude idle','');
+}
+
+function handleActions(actions) {
+  actions.forEach(a => {
+    if (a.type==='navigateTo') {
+      const t = String(a.patient);
+      if (t==='next') {
+        if (currentIdx < patients.length-1) setCurrentPatient(currentIdx+1);
+        else speak('Already on the last patient.');
+      } else if (t==='previous') {
+        if (currentIdx > 0) setCurrentPatient(currentIdx-1);
+        else speak('Already on the first patient.');
+      } else if (!isNaN(parseInt(t))) {
+        setCurrentPatient(parseInt(t));
+      } else {
+        const idx = patients.findIndex(p=>p.toLowerCase().includes(t.toLowerCase()));
+        if (idx>=0) setCurrentPatient(idx);
+        else speak(`Could not find patient ${t}.`);
+      }
+      log(`navigated to: ${patients[currentIdx]}`, 'ok');
+    } else if (a.type==='fillCell') {
+      if (a.uncertain) {
+        speak(a.question);
+        const pi = patients.indexOf(a.patient);
+        if (pi>=0) highlightCell(pi, a.column, true);
+        log(`uncertain: ${a.question}`, 'info');
+      } else {
+        fillCell(a.patient, a.column, a.value);
+        log(`filled ${a.patient} / ${a.column} = ${a.value}`, 'ok');
+      }
+    }
+  });
+}
+
+// ── Export ──────────────────────────────────────────────────────
+function exportCSV() {
+  const rows = [['Patient',...columns].join(',')];
+  patients.forEach(p => {
+    rows.push([p,...columns.map(c=>{ const v=tableData[p][c]||''; return v.includes(',')? `"${v}"`:v; })].join(','));
+  });
+  const blob = new Blob([rows.join('\n')],{type:'text/csv'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='ortho_measurements.csv'; a.click();
+  log('exported CSV', 'ok');
+}
+
+function resetAll() {
+  stopMic();
+  columns=[]; patients=[]; tableData={}; currentIdx=0; procBuffer='';
+  sheetPatientMap={}; accessToken=null; spreadsheetId='';
+  document.getElementById('session-view').style.display='none';
+  document.getElementById('setup-view').style.display='block';
+  setPill('sheets-pill','sheets disconnected','');
+  log('reset');
+}
+</script>
+</body>
+</html>
